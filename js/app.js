@@ -1,13 +1,20 @@
 "use strict";
+<<<<<<< HEAD
 
 import { Network } from "vis-network/peer/esm/vis-network";
 import { DataSet } from "vis-data/peer/esm/vis-data";
 import config from "./config";
 import jQuery from "jquery";
+=======
+>>>>>>> POC of speach rec
 
 let lastFpCount = 0;
 let currentChain = [];
 let currentSelectedNode = "";
+<<<<<<< HEAD
+=======
+let speakRecIsAktiv = false;
+>>>>>>> POC of speach rec
 
 if (typeof String.prototype.startsWith != "function") {
   String.prototype.startsWith = function (str) {
@@ -40,8 +47,11 @@ let locales = {
     editEdge: "Edit Edge",
     addDescription: "Click in an empty space to place a new room.",
     edgeDescription: "Click on a room and drag the edge to another room to connect them.",
+<<<<<<< HEAD
     del: "Delete selected",
     back: "Back",
+=======
+>>>>>>> POC of speach rec
   },
 };
 
@@ -139,7 +149,11 @@ let options = {
 
 // create vis network
 let container = document.querySelector("#metiscbr-graphui");
+<<<<<<< HEAD
 let network = new Network(container, data, options);
+=======
+let network = new vis.Network(container, data, options);
+>>>>>>> POC of speach rec
 network.setOptions({
   physics: { enabled: false },
 });
@@ -799,10 +813,17 @@ const agraphmlToRoomConf = function () {
       let resultId = "resultAgraphml_" + result;
       resultAgraphmlElement.prop("id", resultId);
       resultAgraphmlElement.prop("class", "resultAgraphml");
+<<<<<<< HEAD
       let resultNodes = new DataSet([]);
       let resultEdges = new DataSet([]);
       let resultContainer = document.querySelector("#" + resultId);
       let resultNetwork = new Network(resultContainer, {}, options);
+=======
+      let resultNodes = new vis.DataSet([]);
+      let resultEdges = new vis.DataSet([]);
+      let resultContainer = document.querySelector("#" + resultId);
+      let resultNetwork = new vis.Network(resultContainer, {}, options);
+>>>>>>> POC of speach rec
       resultNetwork.setOptions({
         height: "180px",
         physics: {
@@ -884,7 +905,11 @@ const agraphmlToRoomConf = function () {
 
 let availableMappingNetworks = {};
 const getNetworkForMapping = function (container) {
+<<<<<<< HEAD
   let mappingNetwork = new Network(container, {}, options);
+=======
+  let mappingNetwork = new vis.Network(container, {}, options);
+>>>>>>> POC of speach rec
   mappingNetwork.setOptions({
     height: "600px",
     width: "650px",
@@ -917,8 +942,13 @@ const createMappingsView = function (query, result, mapping, containers, queryTy
     }
   }
   let nameExists = result.includes('<data key="name">');
+<<<<<<< HEAD
   applyAgraphml(query, new DataSet([]), new DataSet([]), getNetworkForMapping(containers.containerQuery), queryNodeIds);
   applyAgraphml(result, new DataSet([]), new DataSet([]), getNetworkForMapping(containers.containerResult), resultNodeIds, nameExists ? 40 : 1);
+=======
+  applyAgraphml(query, new vis.DataSet([]), new vis.DataSet([]), getNetworkForMapping(containers.containerQuery), queryNodeIds);
+  applyAgraphml(result, new vis.DataSet([]), new vis.DataSet([]), getNetworkForMapping(containers.containerResult), resultNodeIds, nameExists ? 40 : 1);
+>>>>>>> POC of speach rec
 };
 
 const showRetrievalResults = function (msg) {
@@ -1082,7 +1112,11 @@ closeAdaptation.onclick = function () {
 };
 
 let zonesViewContainer = document.querySelector("#zonesViewContainer");
+<<<<<<< HEAD
 let zonesNetwork = new Network(zonesViewContainer, {}, options);
+=======
+let zonesNetwork = new vis.Network(zonesViewContainer, {}, options);
+>>>>>>> POC of speach rec
 zonesNetwork.setOptions({
   height: "700px",
   width: "1306px",
@@ -1104,7 +1138,11 @@ const inspectZones = function (graphMLZones) {
   document.querySelector("#sendAgraphml .loading").classList.remove("active");
   let graphML = graphMLZones.indexOf("<zones>") > -1 ? graphMLZones.substring(graphMLZones.indexOf("<graphml"), graphMLZones.lastIndexOf("</zones")) : graphMLZones;
   zonesView.classList.remove("hide");
+<<<<<<< HEAD
   applyAgraphml(graphML, new DataSet([]), new DataSet([]), zonesNetwork);
+=======
+  applyAgraphml(graphML, new vis.DataSet([]), new vis.DataSet([]), zonesNetwork);
+>>>>>>> POC of speach rec
 };
 
 let availableZones = jQuery("#availableZones");
@@ -1335,3 +1373,123 @@ jQuery(function ($) {
     $("#retrievalSettingsWrapper").toggleClass("hide");
   });
 });
+
+//######################
+//KARIM
+let beYouState = 0;
+const beYouStates = [
+  {
+    state: 1,
+    message: "Welcome Iam BeYou. How can I help you? If you don`t need any help say I don't need help, otherwise say: Add and select room, add edge, delete edge and room or House structure",
+    dealy: 10000,
+    positiveState: 4,
+    negativeState: 2,
+    prevstate: 0,
+    positiveKeywords: ["add", "room"],
+    negativeKeywords: ["no", "don't"],
+  },
+  {
+    state: 2,
+    message: "Are you sure you don't need any help?",
+    delay: 4000,
+  },
+  {
+    state: 3,
+    message: "Awesome, come back whenever you need anything. See you next time!",
+    delay: 5000,
+  },
+];
+let recognizing;
+let recognition = new webkitSpeechRecognition();
+recognition.continuous = true;
+reset();
+recognition.onend = reset();
+
+function reset() {
+  recognizing = false;
+  button.innerHTML = "Click to Speak";
+}
+
+function toggleStartStop(message) {
+  if (beYouState === 0) {
+    speak(beYouStates[beYouState].message);
+  }
+  speak(message);
+  setTimeout(function () {
+    if (recognizing) {
+      recognition.stop();
+      reset();
+    } else {
+      hear();
+      recognizing = true;
+      button.innerHTML = "Waiting for informations";
+    }
+  }, beYouStates[beYouState].dealy);
+}
+
+recognition.onresult = function (event) {
+  // if (event.results[0][0].transcript.includes("test")) {
+  //   var nodes = new vis.DataSet([{ id: 1, label: "x=200, y=200", x: 200, y: 200 }]);
+  // } else {
+  //   var nodes = new vis.DataSet([{ id: 1, label: "x=100, y=100", x: 100, y: 100 }]);
+  // }
+  // network.update({ nodes: nodes });
+  recognition.stop();
+  beYouController(event.results[0][0].transcript);
+};
+
+function speak(text) {
+  var msg = new SpeechSynthesisUtterance();
+  msg.text = text;
+  msg.lang = "en-US";
+  msg.volume = 1; // 0 to 1
+  msg.rate = 1; // 0.1 to 10
+  msg.pitch = 1; //0 to 2
+  speechSynthesis.speak(msg);
+}
+
+function hear() {
+  recognition.start();
+  // recognition.continuous = true;
+}
+
+function beYouController(message) {
+  console.log("MESSAGE", message);
+  console.log("STATE", beYouState);
+  if (positiveKeywordCheck(message)) {
+    console.log("POSITIVE CHECK");
+    beYouState = beYouStates[beYouState].positiveState;
+    reset();
+    toggleStartStop(beYouStates[beYouState].message);
+  }
+  if (negativeKeywordCheck(message)) {
+    console.log("NEGATIV CHECK");
+    beYouState = beYouStates[beYouState].negativeState;
+    reset();
+    toggleStartStop(beYouStates[beYouState].message);
+  }
+}
+
+function positiveKeywordCheck(keyword) {
+  for (let i = 0; i < beYouStates[beYouState].positiveKeywords.length; i++) {
+    if (beYouStates[beYouState].positiveKeywords[i].includes(keyword)) {
+      return true;
+    }
+  }
+  return false;
+}
+function negativeKeywordCheck(message) {
+  let check = false;
+  console.log("IN FUNC");
+  for (let i = 0; i < beYouStates[beYouState].negativeKeywords.length; i++) {
+    console.log("IN FOR MESSAGE", message);
+    console.log("IN FOR KEYWORD", beYouStates[beYouState].negativeKeywords[i]);
+    console.log("IN FOR INCLUDES", beYouStates[beYouState].negativeKeywords[i].includes(message));
+    if (message.includes(beYouStates[beYouState].negativeKeywords[i])) {
+      console.log("IN IF");
+      check = true;
+      break;
+    }
+  }
+  return check;
+}
