@@ -1412,18 +1412,19 @@ function hear() {
 function beYouController(message) {
   console.log("MESSAGE", message);
   console.log("STATE", beYouState);
-  if (positiveKeywordCheck(message)) {
+  if (positiveKeywordCheck(message) && !negativeKeywordCheck(message)) {
     console.log("POSITIVE CHECK");
     beYouState = beYouStates[beYouState].positiveState;
     reset();
     toggleStartStop(beYouStates[beYouState].message);
-  }
-  if (negativeKeywordCheck(message)) {
+  } else if (negativeKeywordCheck(message) && !positiveKeywordCheck(message)) {
     console.log("NEGATIV CHECK");
     beYouState = beYouStates[beYouState].negativeState;
     reset();
     toggleStartStop(beYouStates[beYouState].message);
   }
+  // else if abort check => go in last state (abort state)
+  // else => go in "did not understand state"
 }
 
 function positiveKeywordCheck(keyword) {
