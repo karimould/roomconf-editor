@@ -1,5 +1,6 @@
 //js
 import "./app.js";
+import "./beyou/beyou.ts";
 
 //css
 import "../css/style.css";
