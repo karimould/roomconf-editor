@@ -1,15 +1,31 @@
 import * as jQuery from "jquery";
+import { tokenize, dictionary, vsm, tf, idff, tfidf, cosine } from "./nlp/nlp";
 import { network } from "../app";
+import { beYouStateObject } from "./stateObject";
 
-interface IbeYouStateObject {
+export interface IbeYouStateObject {
   state: number;
   message: string;
   delay: number;
-  positiveState: number;
-  negativeState: number;
+  isEndState?: boolean;
   prevstate: number;
-  positiveKeywords: string[];
-  negativeKeywords: string[];
+  functions?: () => void[];
+  children?: {
+    positive: {
+      positiveState: number;
+      positiveTerm: string[];
+    };
+    negative: {
+      negativeState: number;
+      negativeTerm: string[];
+    };
+  }[];
+}
+
+interface tfSimilarity {
+  similarity: number;
+  state: number;
+  term?: string;
 }
 
 export interface IWindow extends Window {
@@ -18,39 +34,9 @@ export interface IWindow extends Window {
 
 document.getElementById("beyou-button").addEventListener("click", () => toggleStartStop());
 
-let beYouState: number = 0;
-const beYouStates: IbeYouStateObject[] = [
-  {
-    state: 0,
-    message: "Welcome Iam BeYou. How can I help you? If you don`t need any help say I don't need help, otherwise say: Add and select room, add edge, delete edge and room or House structure",
-    delay: 10000,
-    positiveState: 4,
-    negativeState: 2,
-    prevstate: 0,
-    positiveKeywords: ["add", "room"],
-    negativeKeywords: ["no", "don't"],
-  },
-  {
-    state: 1,
-    message: "Are you sure you don't need any help?",
-    delay: 4000,
-    positiveState: 4,
-    negativeState: 2,
-    prevstate: 0,
-    positiveKeywords: ["add", "room"],
-    negativeKeywords: ["no", "don't"],
-  },
-  {
-    state: 2,
-    message: "Awesome, come back whenever you need anything. See you next time!",
-    delay: 5000,
-    positiveState: 4,
-    negativeState: 2,
-    prevstate: 0,
-    positiveKeywords: ["add", "room"],
-    negativeKeywords: ["no", "don't"],
-  },
-];
+let state: number = 0;
+const beYouStates: IbeYouStateObject[] = beYouStateObject;
+beYouStates.forEach((obj) => (obj.delay === 0 ? (obj.delay = obj.message.length * 65) : null));
 
 let recognizing: boolean = false;
 const { webkitSpeechRecognition }: IWindow = <IWindow>(<unknown>window);
@@ -65,16 +51,16 @@ function reset() {
 }
 
 function toggleStartStop(message?: string) {
-  console.log("TOGGLE STARTE STOP", beYouState);
-  if (beYouState === 0) {
-    uiController(beYouStates[beYouState].message);
-    speak(beYouStates[beYouState].message);
+  console.log("TOGGLE STARTE STOP", state);
+  if (state === 0 && !beYouStates.find((obj) => obj.state === state).isEndState) {
+    uiController(beYouStates.find((obj) => obj.state === state).message);
+    speak(beYouStates.find((obj) => obj.state === state).message);
   } else {
     uiController(message);
     speak(message);
   }
   setTimeout(function () {
-    if (beYouState === 2) {
+    if (beYouStates.find((obj) => obj.state === state).isEndState) {
       recognition.stop();
       reset();
       return;
@@ -86,7 +72,7 @@ function toggleStartStop(message?: string) {
       recognizing = true;
       hear();
     }
-  }, beYouStates[beYouState].delay);
+  }, beYouStates.find((obj) => obj.state === state).delay);
 }
 
 recognition.onresult = function (event: SpeechRecognitionEvent) {
@@ -115,51 +101,87 @@ function hear() {
   // recognition.continuous = true;
 }
 
+beYouStates.find((obj) => obj.state === state);
+
 function beYouController(message: string) {
-  if (positiveKeywordCheck(message) && !negativeKeywordCheck(message)) {
-    console.log("POSITIVE CHECK");
-    beYouState = beYouStates[beYouState].positiveState;
-    reset();
-    toggleStartStop(beYouStates[beYouState].message);
-  } else if (negativeKeywordCheck(message) && !positiveKeywordCheck(message)) {
-    console.log("NEGATIV CHECK");
-    beYouState = beYouStates[beYouState].negativeState;
-    reset();
-    toggleStartStop(beYouStates[beYouState].message);
-  }
-  // else if abort check => go in last state (abort state)
-  // else => go in "did not understand state"
+  state = getSimilarity(message)[0].state;
+  reset();
+  toggleStartStop(beYouStates.find((obj) => obj.state === state).message);
 }
 
 function uiController(message: string): void {
   jQuery(".beyou-text").text(message);
   jQuery("#beyou-active").show();
-
   recognizing ? (jQuery(".beyou-recording").show(), jQuery(".beyou-speaking").hide()) : (jQuery(".beyou-recording").hide(), jQuery(".beyou-speaking").show());
   setTimeout(function () {
-    console.log("RECO", recognizing);
     recognizing ? (jQuery(".beyou-recording").show(), jQuery(".beyou-speaking").hide()) : (jQuery(".beyou-recording").hide(), jQuery(".beyou-speaking").show());
-    if (beYouState === 2) {
+    if (beYouStates.find((obj) => obj.state === state).isEndState) {
       jQuery("#beyou-active").hide();
+      state = 0;
     }
-  }, beYouStates[beYouState].delay + 1);
+  }, beYouStates.find((obj) => obj.state === state).delay + 1);
 }
 
-function positiveKeywordCheck(keyword: string) {
-  for (let i = 0; i < beYouStates[beYouState].positiveKeywords.length; i++) {
-    if (beYouStates[beYouState].positiveKeywords[i].includes(keyword)) {
-      return true;
-    }
+function getSimilarity(message: string): tfSimilarity[] {
+  console.log("SPEAK", message);
+  console.log("STATE: ", state);
+  let states: { state: number; term: string[] }[] = [];
+  let tokens: string[][] = [];
+  let dict: string[] = [];
+  let vsm_test: number[][] = [];
+  let tf_test: number[][] = [];
+  let tfidf_test: number[][] = [];
+  let output_test: tfSimilarity[] = [];
+  console.log("IS RESETET ?", states, tokens, dict, vsm_test, tf_test, tfidf_test, output_test);
+  for (let i = 0; i < beYouStates.find((obj) => obj.state === state).children.length; i++) {
+    beYouStates.find((obj) => obj.state === state).children[i].positive.positiveTerm.forEach((text) => tokens.push(tokenize(text)));
+    states.push({
+      state: beYouStates.find((obj) => obj.state === state).children[i].positive.positiveState,
+      term: beYouStates.find((obj) => obj.state === state).children[i].positive.positiveTerm,
+    });
+    beYouStates.find((obj) => obj.state === state).children[i].negative.negativeTerm.forEach((text) => tokens.push(tokenize(text)));
+    states.push({
+      state: beYouStates.find((obj) => obj.state === state).children[i].negative.negativeState,
+      term: beYouStates.find((obj) => obj.state === state).children[i].negative.negativeTerm,
+    });
   }
-  return false;
-}
-function negativeKeywordCheck(message: string) {
-  let check = false;
-  for (let i = 0; i < beYouStates[beYouState].negativeKeywords.length; i++) {
-    if (message.includes(beYouStates[beYouState].negativeKeywords[i])) {
-      check = true;
-      break;
-    }
+
+  for (let i = 0; i < tokens.length; i++) {
+    dict = dictionary(tokens[i], dict);
   }
-  return check;
+
+  for (let i = 0; i < tokens.length; i++) {
+    vsm_test.push(vsm(tokens[i], dict));
+  }
+
+  for (let i = 0; i < vsm_test.length; i++) {
+    tf_test.push(tf(vsm_test[i], tokens[i].length));
+  }
+
+  let idf = idff(tokens, dict);
+
+  for (let i = 0; i < tf_test.length; i++) {
+    tfidf_test.push(tfidf(tf_test[i], idf));
+  }
+
+  let queryTokens = tokenize(message);
+  let queryVsm = vsm(queryTokens, dict);
+  let querytf = tf(queryVsm, queryTokens.length);
+  let querytfidf = tfidf(querytf, idf);
+  console.log("TFIDF", tfidf_test);
+  console.log("states", states);
+  for (let i = 0; i < tfidf_test.length; i++) {
+    output_test.push({
+      similarity: cosine(tfidf_test[i], querytfidf),
+      state: states[i] === undefined ? 2 : states[i].state,
+    });
+  }
+
+  console.log("###################################");
+  console.log(
+    "output:",
+    output_test.sort((a, b) => (a.similarity < b.similarity ? 1 : b.similarity < a.similarity ? -1 : 0))
+  );
+  console.log("###################################");
+  return output_test.sort((a, b) => (a.similarity < b.similarity ? 1 : b.similarity < a.similarity ? -1 : 0));
 }
