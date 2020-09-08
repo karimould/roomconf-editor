@@ -2,12 +2,16 @@
 
 import { Network } from "vis-network/peer/esm/vis-network";
 import { DataSet } from "vis-data/peer/esm/vis-data";
+import init from "./beyou/beyou";
+import { beYouStateObject } from "./stateObject";
 import config from "./config";
 import jQuery from "jquery";
 
 let lastFpCount = 0;
 let currentChain = [];
 let currentSelectedNode = "";
+
+init(beYouStateObject, "en-US", 0.4);
 
 if (typeof String.prototype.startsWith != "function") {
   String.prototype.startsWith = function (str) {
@@ -139,6 +143,7 @@ let options = {
 
 // create vis network
 let container = document.querySelector("#metiscbr-graphui");
+
 export let network = new Network(container, data, options);
 
 network.setOptions({

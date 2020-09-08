@@ -1,10 +1,9 @@
-import { IbeYouStateObject } from "./beyou";
+import { IbeYouStateObject } from "./beyou/types";
 
 export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 0,
     message: "Welcome Iam BeYou. How can I help you? If you don`t need any help say I don't need help, otherwise say: Add and select room, add edge, delete edge and room or House structure",
-    delay: 0,
     prevstate: 0,
     children: [
       {
@@ -52,7 +51,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 1,
     message: "Are you sure you don't need any help?",
-    delay: 0,
     prevstate: 0,
     children: [
       {
@@ -70,14 +68,12 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 2,
     message: "Awesome, come back whenever you need anything. See you next time!",
-    delay: 0,
     prevstate: 0,
     isEndState: true,
   },
   {
     state: 3,
     message: "Say 'Delete Edge' when you want to know how to delete an edge or say 'delete room' when you want to know how to delete a room.",
-    delay: 0,
     prevstate: 0,
     children: [
       {
@@ -106,7 +102,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
     state: 4,
     message:
       "Please say 'Room heaven direction'if you want to know in which heaven direction to place your room. Or say 'room order' if you want to know which order should be followed for each room.",
-    delay: 0,
     prevstate: 0,
     children: [
       {
@@ -134,7 +129,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 5,
     message: "When you have at least two rooms, click 'Add Edges' and connect two rooms. Do you need help in creating a room?",
-    delay: 0,
     prevstate: 0,
     children: [
       {
@@ -162,7 +156,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 6,
     message: "Please say add room if you want to 'add a new room' or room type if you want to 'select a room type' for an existing room",
-    delay: 0,
     prevstate: 0,
     children: [
       {
@@ -190,7 +183,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 12,
     message: "To add a room please click 'Add room' and click in empty field to create a room. Do you also want to select a room type?",
-    delay: 0,
     prevstate: 6,
     children: [
       {
@@ -218,7 +210,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 9,
     message: "Please say in which heaven direction you want to place a room: North East, East, South, South-West or West. For you information: the sun goes up in the south and down in the west.",
-    delay: 0,
     prevstate: 4,
     children: [
       {
@@ -276,7 +267,6 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 10,
     message: "Please say which room you want to create: Entrance, Kitchen, Eating Room, Living Room, Sleeping Room or Children's Room",
-    delay: 0,
     prevstate: 4,
     children: [
       {
@@ -344,98 +334,84 @@ export const beYouStateObject: IbeYouStateObject[] = [
   {
     state: 7,
     message: "To delete an edge please click on the edge you want to delete and choose 'delete selected'.",
-    delay: 0,
     isEndState: true,
     prevstate: 3,
   },
   {
     state: 8,
     message: "To delete a room, click on the room you want to delete and choose 'Delete selected'. Attention: the edge which is connected with the Room will be deleted too.",
-    delay: 0,
     isEndState: true,
     prevstate: 3,
   },
   {
     state: 14,
     message: "Here you can place the living room or/and the eating room.",
-    delay: 0,
     isEndState: true,
     prevstate: 9,
   },
   {
     state: 15,
     message: "It is nice to place the entrance here.",
-    delay: 0,
     isEndState: true,
     prevstate: 9,
   },
   {
     state: 16,
     message: "Here you can place the children's room, the living room or/and the eating room.",
-    delay: 0,
     isEndState: true,
     prevstate: 9,
   },
   {
     state: 17,
     message: "the best idea is to place the bedroom and the bathroom here.",
-    delay: 0,
     isEndState: true,
     prevstate: 9,
   },
   {
     state: 18,
     message: "Here you can place the children's room and the toilet.",
-    delay: 0,
     isEndState: true,
     prevstate: 9,
   },
   {
     state: 19,
     message: "Make a connection to the kitchen, dining cabinet and/or housekeeping room",
-    delay: 0,
     isEndState: true,
     prevstate: 10,
   },
   {
     state: 20,
     message: "Create a connection to eating room, housekeeping room, dining cabinet and/or garden",
-    delay: 0,
     isEndState: true,
     prevstate: 10,
   },
   {
     state: 21,
     message: "It is good to have connection to the children's room if you have younger childrens. Additionally you can make a connection to the bathroom",
-    delay: 0,
     isEndState: true,
     prevstate: 10,
   },
   {
     state: 22,
     message: "If you habe younger children place the room next to the sleeping room. If they are older try to place the room far away from the sleeping room of the parents",
-    delay: 0,
     isEndState: true,
     prevstate: 10,
   },
   {
     state: 23,
     message: "Combine this room with the living room.",
-    delay: 0,
     isEndState: true,
     prevstate: 10,
   },
   {
     state: 24,
     message: "You can link the working room, the eating room and/or the sleeping room.",
-    delay: 0,
     isEndState: true,
     prevstate: 10,
   },
   {
     state: 13,
     message: "To select a room type please double click to edit 'Room'. Select room type. If required enter area, windows and label",
-    delay: 0,
     isEndState: true,
     prevstate: 6,
   },
