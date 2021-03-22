@@ -1,12 +1,18 @@
 import * as jQuery from "jquery";
 import { tokenize, dictionary, vectorSpaceModel, termFrequency, inverseDocumentFrequency, similarity, cosineSimilarity } from "./nlp/nlp";
 import { IWindow, IbeYouStateObject, tfSimilarity } from "./types";
+import axios from "axios"
+
+const endpoint = "http://localhost:3000"
 
 let state: number;
 let beYouStates: IbeYouStateObject[];
 let tolerance: number;
+let learnTolerance: number;
 let lang: string;
 let recognizing: boolean;
+let useAPI: boolean;
+
 const { webkitSpeechRecognition }: IWindow = <IWindow>(<unknown>window);
 const recognition = new webkitSpeechRecognition();
 
@@ -16,6 +22,8 @@ export default function init(beYouStateObjects: IbeYouStateObject[], initLang = 
   tolerance = initTolerance;
   lang = initLang;
   recognizing = false;
+  useAPI = false
+  learnTolerance = 0.7
   beYouStates.forEach((obj) => (obj.delay === undefined ? (obj.delay = obj.message.length * 65) : null));
   recognition.continuous = true;
   document.getElementById("beyou-button").addEventListener("click", () => toggleStartStop());
@@ -71,13 +79,25 @@ function hear() {
   recognition.start();
 }
 
-function beYouController(message: string) {
+async function beYouController(message: string) {
   let newMessage: string;
-  if (getSimilarity(message)[0].similarity >= tolerance) {
-    state = getSimilarity(message)[0].state;
-    newMessage = beYouStates.find((obj) => obj.state === state).message;
+  if(useAPI) {
+    const data = await getSimilarityFromApi(message)
+    if(data.class === "-1") {
+      newMessage = "Unfortunately I did not understand what you said. Please repeat it again.";
+    } else {
+      state = parseInt(data.class) 
+      newMessage = beYouStates.find((obj) => obj.state === state).message;
+    }
   } else {
-    newMessage = "Unfortunately I did not understand what you said. Please repeat it again.";
+    const sim = getSimilarity(message)[0].similarity 
+    if (sim >= tolerance) {
+      state = getSimilarity(message)[0].state;
+      sim >= learnTolerance && await axios.get(`${endpoint}/save/${message}/${state}`)
+      newMessage = beYouStates.find((obj) => obj.state === state).message;
+    } else {
+      newMessage = "Unfortunately I did not understand what you said. Please repeat it again.";
+    }
   }
 
   reset();
@@ -97,7 +117,12 @@ function uiController(message: string): void {
   }, beYouStates.find((obj) => obj.state === state).delay + 1);
 }
 
-const getSimilarity = (message: string): tfSimilarity[] => {
+const getSimilarityFromApi = async (userInput: string) => {
+  const response = await axios.get(`${endpoint}/predict/${userInput}`)
+  return response.data as { class: string , probability: number }
+}
+
+const getSimilarity = (userInput: string): tfSimilarity[] => {
   let states: { state: number; term: string[] }[] = [];
   let tokens: string[][] = [];
   let dict: string[] = [];
@@ -136,7 +161,7 @@ const getSimilarity = (message: string): tfSimilarity[] => {
     tfidf_test.push(similarity(tf_test[i], idf));
   }
 
-  let queryTokens = tokenize(message);
+  let queryTokens = tokenize(userInput);
   let queryVsm = vectorSpaceModel(queryTokens, dict);
   let querytf = termFrequency(queryVsm, queryTokens.length);
   let querytfidf = similarity(querytf, idf);

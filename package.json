@@ -38,6 +38,7 @@
   "dependencies": {
     "@types/jquery": "^3.5.1",
     "@types/vis": "^4.21.20",
+    "axios": "^0.21.1",
     "jquery": "^3.5.1",
     "vis-data": "^7.0.0",
     "vis-network": "^7.10.2",
